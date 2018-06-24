@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap-table.min.css">
+</head>
+<body>
+    <label for="">导入文件</label>
+    <input type="file" id="excel-file">
+    <table id="myTable" class="editable"></table>
+
+    
+
+    <script src="jquery-1.12.4.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="bootstrap-table.min.js"></script>
+    <script src="xlsx.core.min.js"></script>
+    <script src="editTable.js"></script>
+    <script>
+        $(function(){
+            //表格数据
+            var tableDatas=[];
+            // var fileDatas = []; // 存储获取到的数据
+
+            $('#excel-file').change(function (e) {
+                var files = e.target.files;
+
+                var fileReader = new FileReader();
+                fileReader.onload = function (ev) {
+                    try {
+                        var data = ev.target.result,
+                            workbook = XLSX.read(data, {
+                                type: 'binary'
+                            }), // 以二进制流方式读取得到整份excel表格对象
+                            fileDatas = []; // 存储获取到的数据
+                    } catch (e) {
+                        console.log('文件类型不正确');
+                        return;
+                    }
+
+                    // 表格的表格范围，可用于判断表头是否数量是否正确
+                    var fromTo = '';
+                    // 遍历每张表读取
+                    for (var sheet in workbook.Sheets) {
+                        //每张表的数据
+                        var sheetDatas=[];
+                        if (workbook.Sheets.hasOwnProperty(sheet)) {
+                            fromTo = workbook.Sheets[sheet]['!ref'];
+                            console.log(fromTo);
+                            sheetDatas.push(XLSX.utils.sheet_to_json(workbook.Sheets[sheet]));
+                            fileDatas = fileDatas.concat(sheetDatas);
+                            // break; // 如果只取第一张表，就取消注释这行
+                        }
+                    }
+
+                    console.log(fileDatas);
+                    getTableDatas(fileDatas);
+                    showTable(fileDatas[0]);
+                    handleTable();
+                };
+
+                // 以二进制方式打开文件
+                fileReader.readAsBinaryString(files[0]);
+                
+            });
+
+            //遍历fileDatas
+            function getTableDatas(datas){
+                datas.forEach(function(val,i,arr){
+                    //表数据、表头数据、表体数据
+                    var sheetD=[];
+                    var sheetTD=[];
+                    var sheetBD=[];
+                    var obj={};
+                    if(!val.length){return};
+                    arr[i].forEach(function(item,k,array){
+                        var rows=[];
+                        for(var key in array[k]){
+                            rows.push(array[k][key]);
+                            if(sheetTD.toString().indexOf(key)!==-1){
+                                continue;//表头不能重覆
+                            }
+                            sheetTD.push(key);
+                        }
+                        sheetBD.push(rows);
+                        obj["th"]=sheetTD;
+                        obj["td"]=sheetBD;
+                    })
+                    sheetD.push(obj);
+                    tableDatas.push(sheetD);
+                })
+                console.log(tableDatas);
+            }
+
+            //生成表格
+            function showTable(datas){
+                var columns=[];
+                tableDatas[0][0].th.forEach(function(val,i,arr){
+                    var colObj = {};
+                    colObj["field"]=val;
+                    colObj["title"]=val;
+                    columns.push(colObj);
+                })
+                $("#myTable").bootstrapTable({
+                    editable: true,//开启编辑模式
+                    columns: columns,
+                    data: datas
+                })
+            }
+
+            //编辑表格
+            function handleTable(){
+                $('.editable').handleTable({
+                    "handleFirst": true,
+                    "cancel": " <span class='glyphicon glyphicon-remove'></span> ",
+                    "edit": " <span class='glyphicon glyphicon-edit'></span> ",
+                    "add": " <span class='glyphicon glyphicon-plus'></span> ",
+                    "save": " <span class='glyphicon glyphicon-saved'></span> ",
+                    "confirm": " <span class='glyphicon glyphicon-ok'></span> ",
+                    "operatePos": -1,
+                    // "editableCols": [2, 3, 4],
+                    "order": ["add", "edit"],
+                    "saveCallback": function (data, isSuccess) { //这里可以写ajax内容，用于保存编辑后的内容 
+                        //data: 返回的数据 
+                        //isSucess: 方法，用于保存数据成功后，将可编辑状态变为不可编辑状态 
+                        var flag = true; //ajax请求成功（保存数据成功），才回调isSuccess函数（修改保存状态为编辑状态） 
+                        if (flag) {
+                            isSuccess();
+                            alert(data + " 保存成功");
+                        } else {
+                            alert(data + " 保存失败");
+                        }
+
+                        return true;
+                    },
+                    "addCallback": function (data, isSuccess) {
+                        var flag = true;
+                        if (flag) {
+                            isSuccess();
+                            alert(data + " 增加成功");
+                        } else {
+                            alert(data + " 增加失败");
+                        }
+                    },
+                    "delCallback": function (isSuccess) {
+                        var flag = true;
+                        if (flag) {
+                            isSuccess();
+                            alert("删除成功");
+                        } else {
+                            alert("删除失败");
+                        }
+                    }
+                });
+            }
+            // handleTable();
+        })
+    </script>
+</body>
+</html>
