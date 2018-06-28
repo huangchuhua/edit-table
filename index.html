@@ -9,8 +9,12 @@
     <link rel="stylesheet" href="bootstrap-table.min.css">
 </head>
 <body>
-    <label for="">导入文件</label>
-    <input type="file" id="excel-file">
+    <div class="file_input">
+        <label for="">导入文件</label>
+        <input type="file" id="excel-file">
+        <button style="display: none" id="edit_btn">编辑表格</button>
+    </div>
+    
     <table id="myTable" class="editable"></table>
 
     
@@ -58,9 +62,11 @@
                     }
 
                     console.log(fileDatas);
-                    getTableDatas(fileDatas);
-                    showTable(fileDatas[0]);
-                    handleTable();
+                    if(fileDatas){
+                        getTableDatas(fileDatas);
+                        showTable(fileDatas[0]);
+                        $("#edit_btn").show();
+                    }
                 };
 
                 // 以二进制方式打开文件
@@ -158,6 +164,14 @@
                 });
             }
             // handleTable();
+
+            //编辑表格按钮
+            $("#edit_btn").on("click",function(){
+                //给表格添加一空列
+                $(".editable thead tr").append("<th></th>");
+                $(".editable tbody tr").append("<td></td>");
+                handleTable();
+            })
         })
     </script>
 </body>

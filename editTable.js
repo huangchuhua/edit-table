@@ -188,7 +188,7 @@ $(function () {
                 afterSave = []; //清空原来保存的数据 
                 for (var i = 0; i < cols.length; i++) {
                     var tr = p.children().eq(cols[i]);
-                    var editTr = "<input type=\"text\" class=\"form-control\" value=\"" + tr.html() + "\"/>";
+                    var editTr = "<input type=\"text\" class=\"form-control\" value=\"" + tr.text() + "\"/>";
                     afterSave.push(tr.html()); //保存未修改前的数据 
                     tr.html(editTr);
                 }
@@ -202,7 +202,6 @@ $(function () {
                 }
 
                 var p = $(ele).parents('tr');
-
                 for (var i = 0; i < cols.length; i++) {
                     var tr = p.children().eq(cols[i]);
                     var value;
@@ -211,7 +210,11 @@ $(function () {
                     } else {
                         value = afterSave[i];
                     }
-
+                    if(p.children("th").length>0){//对bootstrap表头的处理
+                        var html='<div class="th-inner ">'+value+'</div><div class="fht-cell"></div>';
+                        tr.html(html);
+                        continue;
+                    }
                     tr.html(value);
                 }
             }
@@ -225,17 +228,38 @@ $(function () {
             $(addLink).appendTo(operateCol).on("click", function () {
                 //获取被点击“添加”的当前行 tr jQuery对象 
                 var p = $(this).parents('tr');
-                var copyRow = p.clone(); //构建新的一行 
+                var copyRow = p.clone(); //构建新的一行
                 var input = "<input type=\"text\"/>";
                 var childLen = p.children().length;
-                for (var i = 0; i < childLen; i++) {
-                    copyRow.children().eq(i).html("<input type=\"text\" class=\"form-control\"/>");
-                }
 
-                //最后一行是操作行 
-                var last = copyRow.children().eq(c.operatePos);
-                last.html("");
-                p.after(copyRow);
+                if(p.children("th").length>0){
+                    var newTr=document.createElement("tr")
+                    for(var i=0;i<childLen;i++){
+                        var newTd=document.createElement("td");
+                        if(i==childLen-1){
+                            newTd.innerHTML="";
+                        }else{
+                            newTd.innerHTML="<input type=\"text\" class=\"form-control\"/>";
+                        }
+                        newTr.appendChild(newTd);
+                        console.log(newTr)
+                        // newTr.children.eq(i).innerHTML="<input type=\"text\" class=\"form-control\"/>";
+                    }
+                    //最后一行是操作行 
+                    // var last = newTr.children.eq(c.operatePos);
+                    // last.html("");
+                    p.after(newTr);
+                    console.log(110)
+                }else{
+                    for (var i = 0; i < childLen; i++) {
+                        copyRow.children().eq(i).html("<input type=\"text\" class=\"form-control\"/>");
+                    }
+
+                    //最后一行是操作行 
+                    var last = copyRow.children().eq(c.operatePos);
+                    last.html("");
+                    p.after(copyRow);
+                }
 
                 var confirm = $(confirmLink).appendTo(last).on("click", function () {
                     var data = [];
